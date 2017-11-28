@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: localhost
+  username: predikto
+  password: <%= ENV['PG_PASSWORD'] %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: predikto_development
+
+test:
+  <<: *default
+  database: predikto_test
+
+production:
+  <<: *default
+  database: predikto_production
+  username: predikto
+  password: <%= ENV['PREDIKTO_DATABASE_PASSWORD'] %>
