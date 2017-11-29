@@ -10,7 +10,9 @@
     <%= stylesheet_pack_tag "application" %>
   </head>
 
-  <body>
+  <body id="main-content-body">
+    <%= render "header" %>
     <%= yield %>
+    <%= render "footer" %>
   </body>
 </html>
