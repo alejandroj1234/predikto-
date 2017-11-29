@@ -1,3 +1,109 @@
+/************* GENERAL CSS *****************/
 html {
-    font-family: monospace;
+    min-height: 100%;
+    position: relative;
+}
+
+body {
+    margin: 0 0 100px;
+}
+
+#devise-body {
+    margin-top: 50px;
+}
+
+#main-content-body {
+    margin-top: 50px;
+}
+
+/******************* INTRO PIC ****************/
+#intro {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    text-align: center;
+    color: #fff;
+    padding-bottom: 100px;
+    overflow: hidden;
+}
+#intro .homepage-image {
+    min-height: 100vh;
+    background: url('../../assets/images/currency2.jpg') center center no-repeat;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    -webkit-backface-visibility: hidden;
+    padding-top: 200px;
+    padding-bottom: 120px;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+#intro .homepage-image h1 {
+    font-size: 70px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #fff;
+    margin-bottom: 40px;
+    font-weight: 900;
+    filter: alpha(opacity=0);
+    -webkit-backface-visibility: hidden;
+    margin-left: auto;
+    margin-right: auto;
+}
+#intro .homepage-image h4 {
+    color: #fff;
+    margin-bottom: 120px;
+    font-weight: 300;
+    filter: alpha(opacity=0);
+    -webkit-backface-visibility: hidden;
+    line-height: 2;
+    font-size: 40px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.homepage-image-text {
+    color: white;
+}
+
+/********************* CSS FOR FOOTER *******************/
+.body-footer {
+    background: #e7e7e7;
+    font-size: 12px;
+    height: 100px;
+    width: 100%;
+    bottom: 0;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    right: 0 ;
+    border-top: 1px solid transparent;
+}
+
+/****************************CSS FOR HEADER ********************/
+#header-lists li a {
+    color: white;
+    padding: 5px;
+}
+
+/********************* DEVISE VIEWS***********************/
+#landing-page-devise {
+    padding-top: 10vh;
+    min-height: 100%;
+    padding-bottom: 100px;
+}
+.border-form-div {
+    padding: 19px 29px 29px;
+    margin: 0 auto 20px;
+    background-color: #fff;
+    border: 2px solid #e5e5e5;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.border-form-div header h2,h1 {
+    text-align: center;
 }
