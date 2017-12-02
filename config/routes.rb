@@ -9,5 +9,10 @@ Rails.application.routes.draw do
   }
 
   root to: "homepage#index"
-  get "dashboard",       to: "dashboard#index"
+
+  get    "dashboard",     to: "dashboard#index"
+  get    "dashboard/*id", to: "dashboard#index"
+  post   "dashboard",     action:"create",  controller:"dashboard"
+  delete "dashboard/*id", action:"destroy", controller:"dashboard"
+  resources :dashboard, only: [ :index, :create, :delete ]
 end

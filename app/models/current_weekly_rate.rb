@@ -1,0 +1,2 @@
+class CurrentWeeklyRate < ApplicationRecord
+end

@@ -9,4 +9,8 @@
 
 
 import "./application.css";
+import "jquery/dist/jquery.js";
 import "bootstrap/dist/css/bootstrap.css";
+import "d3/build/d3.min.js";
+
+

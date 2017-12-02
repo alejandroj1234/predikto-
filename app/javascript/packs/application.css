@@ -16,6 +16,11 @@ body {
     margin-top: 50px;
 }
 
+#main-section {
+    padding-top: 50px;
+    padding-bottom: 200px;
+}
+
 /******************* INTRO PIC ****************/
 #intro {
     position: relative;
@@ -106,4 +111,16 @@ body {
 }
 .border-form-div header h2,h1 {
     text-align: center;
+}
+
+/* D3 graph */
+.bar { fill: steelblue; }
+
+#graph {
+    font: 10px sans-serif;
+    background-color: steelblue;
+    text-align: right;
+    padding: 3px;
+    margin: 1px;
+    color: white;
 }
