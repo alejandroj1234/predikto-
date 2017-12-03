@@ -138,12 +138,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr *ngFor="let saved_weekly_exchange of saved_weekly_exchanges">
-                        <td>{{saved_weekly_exchange.year_and_week}}</td>
-                        <td>{{saved_weekly_exchange.predicted_rate}}</td>
-                        <td>{{saved_weekly_exchange.sum}}</td>
-                        <td>{{saved_weekly_exchange.profit_loss}}</td>
-                        <td>{{saved_weekly_exchange.rank}}</td>
+                    <tr *ngFor="let saved_weekly_calculation of saved_weekly_calculations">
+                        <td>{{saved_weekly_calculation.year_and_week}}</td>
+                        <td>{{saved_weekly_calculation.predicted_rate}}</td>
+                        <td>{{saved_weekly_calculation.sum}}</td>
+                        <td>{{saved_weekly_calculation.profit_loss}}</td>
+                        <td>{{saved_weekly_calculation.rank}}</td>
                     </tr>
                     </tbody>
                 </table>

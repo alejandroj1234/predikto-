@@ -1,6 +1,6 @@
-class CreateSavedWeeklyExchanges < ActiveRecord::Migration[5.1]
+class CreateSavedWeeklyCalculations < ActiveRecord::Migration[5.1]
   def change
-    create_table :saved_weekly_exchanges do |t|
+    create_table :saved_weekly_calculations do |t|
 
       t.date   :year_and_week   , null: false
       t.float  :predicted_rate  , null: false

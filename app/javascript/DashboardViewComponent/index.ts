@@ -4,7 +4,6 @@ import template              from "./template.html";
 import * as d3 from "d3";
 import * as $ from "jquery";
 
-
 var DashboardViewComponent = Component({
     selector: "dashboard-view",
     template: template
@@ -39,20 +38,21 @@ var DashboardViewComponent = Component({
             "/dashboard.json?id=" + self.id
         ).subscribe(
             data => {
-                self.saved_weekly_exchanges = data['saved_weekly_exchanges']
+                self.saved_weekly_calculations = data['saved_weekly_calculations']
 
-                //CREATE D3 GRAPH HEREz
+                // Set the margins, width and height
                 var margin = {top: 10, right: 20, bottom: 80, left: 60},
                     width = 550 - margin.left - margin.right,
                     height = 380 - margin.top - margin.bottom;
 
+                // Set the x and y scales
                 var x = d3.scaleBand()
                     .range([0, width])
                     .padding(0.1);
                 var y = d3.scaleLinear()
                     .range([height, 0])
 
-
+                // Create the SVG
                 var svg = d3.select("#chart").append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -61,18 +61,18 @@ var DashboardViewComponent = Component({
                         "translate(" + margin.left + "," + margin.top + ")");
 
                 // format the data
-                data['saved_weekly_exchanges'].forEach(function(d) {
+                data['saved_weekly_calculations'].forEach(function(d) {
                     d.sum = +d.sum;
                 });
 
                 // Scale the range of the data in the domains
-                x.domain(data['saved_weekly_exchanges'].map(function(d) { return d.year_and_week; }));
-                var y_domain_min = d3.min(data['saved_weekly_exchanges'], function(d) { return d.sum; })
-                y.domain([y_domain_min-(y_domain_min*.02), d3.max(data['saved_weekly_exchanges'], function(d) { return d.sum; })]);
+                x.domain(data['saved_weekly_calculations'].map(function(d) { return d.year_and_week; }));
+                var y_domain_min = d3.min(data['saved_weekly_calculations'], function(d) { return d.sum; })
+                y.domain([y_domain_min-(y_domain_min*.02), d3.max(data['saved_weekly_calculations'], function(d) { return d.sum; })]);
 
                 // append the rectangles for the bar chart
                 svg.selectAll(".bar")
-                    .data(data['saved_weekly_exchanges'])
+                    .data(data['saved_weekly_calculations'])
                     .enter().append("rect")
                     .attr("class", "bar")
                     .attr("x", function(d) { return x(d.year_and_week); })
@@ -121,7 +121,7 @@ var DashboardViewComponent = Component({
                     "/dashboard.json?id=" + self.id
                 ).subscribe(
                     data => {
-                        self.saved_weekly_exchanges = data['saved_weekly_exchanges']
+                        self.saved_weekly_calculations = data['saved_weekly_calculations']
                     }
                 );
 

@@ -102,7 +102,7 @@ ActiveRecord::Schema.define(version: 20171202050721) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "saved_weekly_exchanges", force: :cascade do |t|
+  create_table "saved_weekly_calculations", force: :cascade do |t|
     t.date "year_and_week", null: false
     t.float "predicted_rate", null: false
     t.float "sum", null: false
@@ -112,8 +112,8 @@ ActiveRecord::Schema.define(version: 20171202050721) do
     t.bigint "calculation_name_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["calculation_name_id"], name: "index_saved_weekly_exchanges_on_calculation_name_id"
-    t.index ["user_id"], name: "index_saved_weekly_exchanges_on_user_id"
+    t.index ["calculation_name_id"], name: "index_saved_weekly_calculations_on_calculation_name_id"
+    t.index ["user_id"], name: "index_saved_weekly_calculations_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -134,6 +134,6 @@ ActiveRecord::Schema.define(version: 20171202050721) do
   end
 
   add_foreign_key "calculation_names", "users"
-  add_foreign_key "saved_weekly_exchanges", "calculation_names"
-  add_foreign_key "saved_weekly_exchanges", "users"
+  add_foreign_key "saved_weekly_calculations", "calculation_names"
+  add_foreign_key "saved_weekly_calculations", "users"
 end

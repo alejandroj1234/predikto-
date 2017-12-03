@@ -8,23 +8,29 @@ class DashboardController < ApplicationController
 
   def index
     if params[:id].present?
-      @saved_weekly_exchanges = SavedWeeklyExchange.where(calculation_name_id: params[:id])
+      @saved_weekly_calculations = SavedWeeklyCalculation
+                                   .where(calculation_name_id: params[:id])
       respond_to do |format|
         format.html
-        format.json { render json: { saved_weekly_exchanges: @saved_weekly_exchanges } }
+        format.json do
+          render json: { saved_weekly_calculations: @saved_weekly_calculations }
+        end
       end
     else
       @calculations = CalculationName.where(user_id: current_user.id)
       respond_to do |format|
         format.html
-        format.json { render json: { calculations: @calculations } }
+        format.json do
+          render json: { calculations: @calculations }
+        end
       end
     end
   end
 
   def destroy
-    @saved_weekly_exchanges = SavedWeeklyExchange.where(calculation_name_id: params[:id])
-    @saved_weekly_exchanges.destroy_all
+    @saved_weekly_calculations = SavedWeeklyCalculation
+                                 .where(calculation_name_id: params[:id])
+    @saved_weekly_calculations.destroy_all
 
     @calculation_name = CalculationName.find(params[:id])
     @calculation_name.destroy
@@ -37,148 +43,69 @@ class DashboardController < ApplicationController
 
   def create
     @today_date = Date.today
-    if HistoricalWeeklyRate.where(base: params[:"base-currency"].upcase).blank?
-      0.upto(24) do |index|
-        t = Thread.new do
-          first_api_call_date = (@today_date - ((index * 7) + 364))
-          first_weekly_returned_rates = HTTP.get("https://api.fixer.io/#{first_api_call_date}?base=#{params[:"base-currency"].upcase}").parse
-          HistoricalWeeklyRate.create(
-            base: params[:"base-currency"].upcase,
-            week: first_api_call_date,
-            AUD: first_weekly_returned_rates["rates"]["AUD"],
-            BGN: first_weekly_returned_rates["rates"]["BGN"],
-            BRL: first_weekly_returned_rates["rates"]["BRL"],
-            CAD: first_weekly_returned_rates["rates"]["CAD"],
-            CHF: first_weekly_returned_rates["rates"]["CHF"],
-            CNY: first_weekly_returned_rates["rates"]["CNY"],
-            CZK: first_weekly_returned_rates["rates"]["CZK"],
-            DKK: first_weekly_returned_rates["rates"]["DKK"],
-            EUR: first_weekly_returned_rates["rates"]["EUR"],
-            GBP: first_weekly_returned_rates["rates"]["GBP"],
-            HKD: first_weekly_returned_rates["rates"]["HKD"],
-            HRK: first_weekly_returned_rates["rates"]["HRK"],
-            HUF: first_weekly_returned_rates["rates"]["HUF"],
-            IDR: first_weekly_returned_rates["rates"]["IDR"],
-            ILS: first_weekly_returned_rates["rates"]["ILS"],
-            INR: first_weekly_returned_rates["rates"]["INR"],
-            JPY: first_weekly_returned_rates["rates"]["JPY"],
-            KRW: first_weekly_returned_rates["rates"]["KRW"],
-            MXN: first_weekly_returned_rates["rates"]["MXN"],
-            MYR: first_weekly_returned_rates["rates"]["MYR"],
-            NOK: first_weekly_returned_rates["rates"]["NOK"],
-            NZD: first_weekly_returned_rates["rates"]["NZD"],
-            PHP: first_weekly_returned_rates["rates"]["PHP"],
-            PLN: first_weekly_returned_rates["rates"]["PLN"],
-            RON: first_weekly_returned_rates["rates"]["RON"],
-            RUB: first_weekly_returned_rates["rates"]["RUB"],
-            SEK: first_weekly_returned_rates["rates"]["SEK"],
-            SGD: first_weekly_returned_rates["rates"]["SGD"],
-            THB: first_weekly_returned_rates["rates"]["THB"],
-            TRY: first_weekly_returned_rates["rates"]["TRY"],
-            USD: first_weekly_returned_rates["rates"]["USD"],
-            ZAR: first_weekly_returned_rates["rates"]["ZAR"])
-        end
+    @base_currency = params[:"base-currency"].upcase
+    @target_currency = params[:"target-currency"].upcase
+    @calculation_name = params[:"calculation-name"]
+    @max_waiting_time = params[:"max-waiting-time"].to_i
+    @amount = params[:amount]
+    @saved_weekly_calculations_array = []
 
-        s = Thread.new do
-          second_api_call_date = (@today_date - ((index * 7) + 729))
-          second_weekly_returned_rates = HTTP.get("https://api.fixer.io/#{second_api_call_date}?base=#{params[:"base-currency"].upcase}").parse
-          HistoricalWeeklyRate.create(
-            base: params[:"base-currency"].upcase,
-            week: second_api_call_date,
-            AUD: second_weekly_returned_rates["rates"]["AUD"],
-            BGN: second_weekly_returned_rates["rates"]["BGN"],
-            BRL: second_weekly_returned_rates["rates"]["BRL"],
-            CAD: second_weekly_returned_rates["rates"]["CAD"],
-            CHF: second_weekly_returned_rates["rates"]["CHF"],
-            CNY: second_weekly_returned_rates["rates"]["CNY"],
-            CZK: second_weekly_returned_rates["rates"]["CZK"],
-            DKK: second_weekly_returned_rates["rates"]["DKK"],
-            EUR: second_weekly_returned_rates["rates"]["EUR"],
-            GBP: second_weekly_returned_rates["rates"]["GBP"],
-            HKD: second_weekly_returned_rates["rates"]["HKD"],
-            HRK: second_weekly_returned_rates["rates"]["HRK"],
-            HUF: second_weekly_returned_rates["rates"]["HUF"],
-            IDR: second_weekly_returned_rates["rates"]["IDR"],
-            ILS: second_weekly_returned_rates["rates"]["ILS"],
-            INR: second_weekly_returned_rates["rates"]["INR"],
-            JPY: second_weekly_returned_rates["rates"]["JPY"],
-            KRW: second_weekly_returned_rates["rates"]["KRW"],
-            MXN: second_weekly_returned_rates["rates"]["MXN"],
-            MYR: second_weekly_returned_rates["rates"]["MYR"],
-            NOK: second_weekly_returned_rates["rates"]["NOK"],
-            NZD: second_weekly_returned_rates["rates"]["NZD"],
-            PHP: second_weekly_returned_rates["rates"]["PHP"],
-            PLN: second_weekly_returned_rates["rates"]["PLN"],
-            RON: second_weekly_returned_rates["rates"]["RON"],
-            RUB: second_weekly_returned_rates["rates"]["RUB"],
-            SEK: second_weekly_returned_rates["rates"]["SEK"],
-            SGD: second_weekly_returned_rates["rates"]["SGD"],
-            THB: second_weekly_returned_rates["rates"]["THB"],
-            TRY: second_weekly_returned_rates["rates"]["TRY"],
-            USD: second_weekly_returned_rates["rates"]["USD"],
-            ZAR: second_weekly_returned_rates["rates"]["ZAR"])
+    if HistoricalWeeklyRate.where(base: @base_currency).blank?
+      0.upto(24) do |weekly_index|
+        first_thread = Thread.new do
+          weekly_date = (@today_date - ((weekly_index * 7) + 364))
+          weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          insert_historical_weekly_rates(
+            @base_currency,
+            weekly_date,
+            weekly_returned_rates
+          )
         end
-        t.join
-        s.join
+        second_thread = Thread.new do
+          weekly_date = (@today_date - ((weekly_index * 7) + 729))
+          weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          insert_historical_weekly_rates(
+            @base_currency,
+            weekly_date,
+            weekly_returned_rates
+          )
+        end
+        first_thread.join
+        second_thread.join
       end
-      current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{params[:"base-currency"].upcase}").parse
-      CurrentWeeklyRate.create(
-        base: params[:"base-currency"].upcase,
-        week: current_base_rate["date"],
-        AUD: current_base_rate["rates"]["AUD"],
-        BGN: current_base_rate["rates"]["BGN"],
-        BRL: current_base_rate["rates"]["BRL"],
-        CAD: current_base_rate["rates"]["CAD"],
-        CHF: current_base_rate["rates"]["CHF"],
-        CNY: current_base_rate["rates"]["CNY"],
-        CZK: current_base_rate["rates"]["CZK"],
-        DKK: current_base_rate["rates"]["DKK"],
-        EUR: current_base_rate["rates"]["EUR"],
-        GBP: current_base_rate["rates"]["GBP"],
-        HKD: current_base_rate["rates"]["HKD"],
-        HRK: current_base_rate["rates"]["HRK"],
-        HUF: current_base_rate["rates"]["HUF"],
-        IDR: current_base_rate["rates"]["IDR"],
-        ILS: current_base_rate["rates"]["ILS"],
-        INR: current_base_rate["rates"]["INR"],
-        JPY: current_base_rate["rates"]["JPY"],
-        KRW: current_base_rate["rates"]["KRW"],
-        MXN: current_base_rate["rates"]["MXN"],
-        MYR: current_base_rate["rates"]["MYR"],
-        NOK: current_base_rate["rates"]["NOK"],
-        NZD: current_base_rate["rates"]["NZD"],
-        PHP: current_base_rate["rates"]["PHP"],
-        PLN: current_base_rate["rates"]["PLN"],
-        RON: current_base_rate["rates"]["RON"],
-        RUB: current_base_rate["rates"]["RUB"],
-        SEK: current_base_rate["rates"]["SEK"],
-        SGD: current_base_rate["rates"]["SGD"],
-        THB: current_base_rate["rates"]["THB"],
-        TRY: current_base_rate["rates"]["TRY"],
-        USD: current_base_rate["rates"]["USD"],
-        ZAR: current_base_rate["rates"]["ZAR"]
+    end
+    if CurrentWeeklyRate.where(base: @base_currency).blank?
+      current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{@base_currency}").parse
+      insert_current_weekly_rate(
+        @base_currency,
+        @today_date,
+        current_base_rate
       )
     end
 
     CalculationName.create!(
-      calculation_name: params[:"calculation-name"],
+      calculation_name: @calculation_name,
       user_id: current_user.id
     )
-    @calculation_name_id = CalculationName.where(calculation_name: params[:"calculation-name"]).first.id
-    @current_target_rate = CurrentWeeklyRate.where(base: params[:"base-currency"].upcase).first[params[:"target-currency"].upcase.to_sym]
+    @calculation_name_id = CalculationName
+                           .where(calculation_name: @calculation_name).first.id
+    @current_target_rate = CurrentWeeklyRate
+                           .where(base: @base_currency).first[@target_currency.to_sym]
 
-    @saved_weekly_exchanges_array = []
-    1.upto(params[:"max-waiting-time"].to_i) do |index|
-      first_date              = @today_date - ((index * 7) + 364)
-      second_date             = @today_date - ((index * 7) + 729)
-      first_year_target_rate  = HistoricalWeeklyRate.where(base: params[:"base-currency"].upcase).where(week: first_date).first[params[:"target-currency"].upcase.to_sym]
-      second_year_target_rate = HistoricalWeeklyRate.where(base: params[:"base-currency"].upcase).where(week: second_date).first[params[:"target-currency"].upcase.to_sym]
-      predicted_rate = (first_year_target_rate + second_year_target_rate) / 2
-      sum = (params[:amount].to_i * predicted_rate).to_f
-      profit_loss = ((params[:amount].to_f * predicted_rate.to_f) - (params[:amount].to_f * @current_target_rate.to_f))
+    1.upto(@max_waiting_time) do |index|
+      first_week = @today_date - ((index * 7) + 364)
+      second_week = @today_date - ((index * 7) + 729)
+      first_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
+                                             .where(week: first_week)
+                                             .first[@target_currency.to_sym]
+      second_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
+                                             .where(week: second_week)
+                                             .first[@target_currency.to_sym]
+      predicted_rate = (first_year_rate + second_year_rate) / 2
+      sum = (@amount.to_i * predicted_rate).to_f
+      profit_loss = ((@amount.to_f * predicted_rate.to_f) - (@amount.to_f * @current_target_rate.to_f))
       year_and_week = @today_date + (index * 7)
-
-      saved_weekly_exchanges_hash = {
+      saved_weekly_calculation_hash = {
         year_and_week: year_and_week,
         predicted_rate: predicted_rate,
         sum: sum,
@@ -186,22 +113,21 @@ class DashboardController < ApplicationController
         calculation_name_id: @calculation_name_id,
         user_id: current_user.id
       }
-      @saved_weekly_exchanges_array << saved_weekly_exchanges_hash
+      @saved_weekly_calculations_array << saved_weekly_calculation_hash
     end
 
-    top_three = @saved_weekly_exchanges_array.sort_by { |hsh| hsh[:sum] }.reverse.first(3)
+    top_three = @saved_weekly_calculations_array.sort_by { |hsh| hsh[:sum] }.reverse.first(3)
     top_three_ranked = top_three.each.with_index(1) { |hsh, index| hsh[:rank] = index }
-
-    @saved_weekly_exchanges_array.collect do |hsh|
+    @saved_weekly_calculations_array.collect do |saved_calc_hsh|
       top_three_ranked.any? do |top_three_hash|
-        if top_three_hash[:year_and_week] == hsh[:year_and_week]
-          hsh[:rank] = top_three_hash[:rank]
+        if top_three_hash[:year_and_week] == saved_calc_hsh[:year_and_week]
+          saved_calc_hsh[:rank] = top_three_hash[:rank]
         end
       end
     end
 
-    @saved_weekly_exchanges_array.each do |hsh|
-      SavedWeeklyExchange.create(
+    @saved_weekly_calculations_array.each do |hsh|
+      SavedWeeklyCalculation.create(
         year_and_week: hsh[:year_and_week],
         predicted_rate: hsh[:predicted_rate],
         sum: hsh[:sum],
