@@ -76,7 +76,17 @@ class DashboardController < ApplicationController
       1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
           weekly_date = @today_date - 365 + (weekly_index * 7)
-          weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          attempt_count = 0
+          max_attempts = 10
+          begin
+            attempt_count += 1
+            puts "attempt #{attempt_count}"
+            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          rescue
+            puts "error "
+            sleep 1
+            retry if attempt_count < max_attempts
+          end
           insert_historical_weekly_rates(
             @base_currency,
             weekly_date,
@@ -85,7 +95,17 @@ class DashboardController < ApplicationController
         end
         second_thread = Thread.new do
           weekly_date = @today_date - 731 + (weekly_index * 7)
-          weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          attempt_count = 0
+          max_attempts = 10
+          begin
+            attempt_count += 1
+            puts "attempt #{attempt_count}"
+            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+          rescue
+            puts "error "
+            sleep 1
+            retry if attempt_count < max_attempts
+          end
           insert_historical_weekly_rates(
             @base_currency,
             weekly_date,
