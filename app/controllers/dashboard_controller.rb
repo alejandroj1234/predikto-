@@ -72,7 +72,7 @@ class DashboardController < ApplicationController
         @week_count = (most_recent_created_at_date - @today_date).to_i / 7
       end
 
-      total_number_of_weeks = @week_count.present? ? @week_count : 25
+      total_number_of_weeks = @week_count.present? ? @week_count.floor : 25
       1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
           weekly_date = @today_date - 365 + (weekly_index * 7)
@@ -84,7 +84,7 @@ class DashboardController < ApplicationController
           )
         end
         second_thread = Thread.new do
-          weekly_date = @today_date - 730 + (weekly_index * 7)
+          weekly_date = @today_date - 731 + (weekly_index * 7)
           weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
           insert_historical_weekly_rates(
             @base_currency,
@@ -98,7 +98,8 @@ class DashboardController < ApplicationController
     end
 
     # The same logic as for historical values but for the current rate
-    if CurrentWeeklyRate.where(base: @base_currency).where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
+    if CurrentWeeklyRate.where(base: @base_currency)
+                        .where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
       CurrentWeeklyRate.where(base: @base_currency).destroy_all
       current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{@base_currency}").parse
       insert_current_weekly_rate(
@@ -126,7 +127,7 @@ class DashboardController < ApplicationController
     # using the predicated rate calculate sum and profit/loss and push into array
     1.upto(@max_waiting_time) do |index|
       first_week = @today_date - 365 + (index * 7)
-      second_week = @today_date - 730 + (index * 7)
+      second_week = @today_date - 731 + (index * 7)
       first_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
                                             .where(week: first_week)
                                             .first[@target_currency.to_sym]
