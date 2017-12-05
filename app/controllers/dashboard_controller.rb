@@ -80,11 +80,9 @@ class DashboardController < ApplicationController
           max_attempts = 10
           begin
             attempt_count += 1
-            puts "attempt #{attempt_count}"
             weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
           rescue
-            puts "error "
-            sleep 1
+            sleep 3
             retry if attempt_count < max_attempts
           end
           insert_historical_weekly_rates(
@@ -99,11 +97,9 @@ class DashboardController < ApplicationController
           max_attempts = 10
           begin
             attempt_count += 1
-            puts "attempt #{attempt_count}"
             weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
           rescue
-            puts "error "
-            sleep 1
+            sleep 3
             retry if attempt_count < max_attempts
           end
           insert_historical_weekly_rates(
