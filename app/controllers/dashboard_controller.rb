@@ -7,6 +7,9 @@ class DashboardController < ApplicationController
   protect_from_forgery prepend: true
 
   def index
+    # If a calculation name ID is passed in the parameters then get
+    # all associated saved weekly calculations
+    # else get all calculation names associated with the current user
     if params[:id].present?
       @saved_weekly_calculations = SavedWeeklyCalculation
                                    .where(calculation_name_id: params[:id])
@@ -28,6 +31,9 @@ class DashboardController < ApplicationController
   end
 
   def destroy
+    # Calculation name id is passed in as a parameter.
+    # The respective calculation name and all the associated
+    # saved weekly calculations are destroyed
     @saved_weekly_calculations = SavedWeeklyCalculation
                                  .where(calculation_name_id: params[:id])
     @saved_weekly_calculations.destroy_all
@@ -43,6 +49,7 @@ class DashboardController < ApplicationController
 
   def create
     @today_date = Date.today
+    @one_week_ago_from_today = @today_date - 7
     @base_currency = params[:"base-currency"].upcase
     @target_currency = params[:"target-currency"].upcase
     @calculation_name = params[:"calculation-name"]
@@ -50,10 +57,25 @@ class DashboardController < ApplicationController
     @amount = params[:amount]
     @saved_weekly_calculations_array = []
 
-    if HistoricalWeeklyRate.where(base: @base_currency).blank?
-      0.upto(24) do |weekly_index|
+    # check if the base currency passed in from the form has a historical rate created within the past week
+    # if it isn't then check if the base currency even has a historical rate,
+    # if it does then figure out how many weeks it has been since it was created
+    # Then enter in the db for each one year ago and two years ago, the rates for the respective date 
+    if HistoricalWeeklyRate.where(base: @base_currency)
+                           .where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
+
+      if HistoricalWeeklyRate.where(base: @base_currency).present?
+        most_recent_created_at_date = HistoricalWeeklyRate.where(base: @base_currency)
+                                                          .order(:created_at)
+                                                          .reverse.first
+                                                          .created_at.to_date
+        @week_count = (most_recent_created_at_date - @today_date).to_i / 7
+      end
+
+      total_number_of_weeks = @week_count.present? ? @week_count : 25
+      1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
-          weekly_date = (@today_date - ((weekly_index * 7) + 364))
+          weekly_date = @today_date - 365 + (weekly_index * 7)
           weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
           insert_historical_weekly_rates(
             @base_currency,
@@ -62,7 +84,7 @@ class DashboardController < ApplicationController
           )
         end
         second_thread = Thread.new do
-          weekly_date = (@today_date - ((weekly_index * 7) + 729))
+          weekly_date = @today_date - 730 + (weekly_index * 7)
           weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
           insert_historical_weekly_rates(
             @base_currency,
@@ -74,7 +96,10 @@ class DashboardController < ApplicationController
         second_thread.join
       end
     end
-    if CurrentWeeklyRate.where(base: @base_currency).blank?
+
+    # The same logic as for historical values but for the current rate
+    if CurrentWeeklyRate.where(base: @base_currency).where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
+      CurrentWeeklyRate.where(base: @base_currency).destroy_all
       current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{@base_currency}").parse
       insert_current_weekly_rate(
         @base_currency,
@@ -83,6 +108,8 @@ class DashboardController < ApplicationController
       )
     end
 
+    # Need to create a calculation name in the db for the calculation and set values
+    # Need to also set the current rate for the target rate 
     CalculationName.create!(
       calculation_name: @calculation_name,
       user_id: current_user.id
@@ -92,18 +119,23 @@ class DashboardController < ApplicationController
     @current_target_rate = CurrentWeeklyRate
                            .where(base: @base_currency).first[@target_currency.to_sym]
 
+    # For each week the user wants a calculation
+    # get the first and second year historical rates,
+    # then divide by two to get the average historical rate for that week.
+    # This value is the predicated rate.
+    # using the predicated rate calculate sum and profit/loss and push into array
     1.upto(@max_waiting_time) do |index|
-      first_week = @today_date - ((index * 7) + 364)
-      second_week = @today_date - ((index * 7) + 729)
+      first_week = @today_date - 365 + (index * 7)
+      second_week = @today_date - 730 + (index * 7)
       first_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
-                                             .where(week: first_week)
-                                             .first[@target_currency.to_sym]
+                                            .where(week: first_week)
+                                            .first[@target_currency.to_sym]
       second_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
                                              .where(week: second_week)
                                              .first[@target_currency.to_sym]
       predicted_rate = (first_year_rate + second_year_rate) / 2
-      sum = (@amount.to_i * predicted_rate).to_f
-      profit_loss = ((@amount.to_f * predicted_rate.to_f) - (@amount.to_f * @current_target_rate.to_f))
+      sum = (@amount * predicted_rate)
+      profit_loss = ((@amount * predicted_rate) - (@amount * @current_target_rate))
       year_and_week = @today_date + (index * 7)
       saved_weekly_calculation_hash = {
         year_and_week: year_and_week,
@@ -116,6 +148,8 @@ class DashboardController < ApplicationController
       @saved_weekly_calculations_array << saved_weekly_calculation_hash
     end
 
+    # Find the top three weekly calculations by sum, rank each one,
+    # and push into weekly calculations array
     top_three = @saved_weekly_calculations_array.sort_by { |hsh| hsh[:sum] }.reverse.first(3)
     top_three_ranked = top_three.each.with_index(1) { |hsh, index| hsh[:rank] = index }
     @saved_weekly_calculations_array.collect do |saved_calc_hsh|
@@ -126,6 +160,7 @@ class DashboardController < ApplicationController
       end
     end
 
+    # save each weekly calculation in the DB
     @saved_weekly_calculations_array.each do |hsh|
       SavedWeeklyCalculation.create(
         year_and_week: hsh[:year_and_week],

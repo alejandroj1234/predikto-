@@ -14,6 +14,7 @@ var DashboardViewComponent = Component({
             this.http = http;
         }
     ],
+    // Gets all the calculations for the user when dashboard is visited
     ngOnInit() {
         var self = this;
         self.http.get(
@@ -22,6 +23,7 @@ var DashboardViewComponent = Component({
             data => { self.calculations = data['calculations'] }
         );
     },
+    // Submits the form to make a calculation
     onSubmit(form: any) {
         var self = this;
         self.http.post(
@@ -30,6 +32,7 @@ var DashboardViewComponent = Component({
             data => { self.ngOnInit() }
         );
     },
+    // Renders the table and graph for a the selected calculation
     viewCalculation: function(calculation) {
         var self = this;
         var id = calculation.id
@@ -39,6 +42,7 @@ var DashboardViewComponent = Component({
         ).subscribe(
             data => {
                 self.saved_weekly_calculations = data['saved_weekly_calculations']
+                d3.select("svg").remove();
 
                 // Set the margins, width and height
                 var margin = {top: 10, right: 20, bottom: 80, left: 60},
@@ -108,6 +112,7 @@ var DashboardViewComponent = Component({
             }
         );
     },
+    // Deletes the calculation name and associated weekly calculations on click
     deleteCalculation: function(calculation) {
         var self = this;
         var id = calculation.id;
@@ -122,6 +127,7 @@ var DashboardViewComponent = Component({
                 ).subscribe(
                     data => {
                         self.saved_weekly_calculations = data['saved_weekly_calculations']
+                        d3.select("svg").remove();
                     }
                 );
 

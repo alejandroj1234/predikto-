@@ -1,0 +1,7 @@
+{
+  "application.css": "/packs-test/application.css",
+  "application.js": "/packs-test/application.js",
+  "currency2.jpg": "/packs-test/currency2.jpg",
+  "dashboard.js": "/packs-test/dashboard.js",
+  "hello_angular.js": "/packs-test/hello_angular.js"
+}

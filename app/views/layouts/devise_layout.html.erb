@@ -11,6 +11,14 @@
   </head>
 
   <body id="devise-body">
+  <% if alert.present? %>
+      <div class="alert alert-danger" id="alert-danger">
+        <a href = "#" class = "close" data-dismiss = "alert">
+          &times;
+        </a>
+        <%= alert %>
+      </div>
+  <% end %>
   <%= render "header" %>
   <%= yield %>
   <%= render "footer" %>
