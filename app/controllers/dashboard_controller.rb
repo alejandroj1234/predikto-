@@ -80,7 +80,7 @@ class DashboardController < ApplicationController
         end
       end
 
-      total_number_of_weeks = @week_count.present? ? @week_count.floor : 25
+      total_number_of_weeks = @week_count.present? ? @week_count : 25
       1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
           date_of_week = (@today_date.years_ago(1) + (weekly_index * 7))
@@ -146,15 +146,25 @@ class DashboardController < ApplicationController
     end
 
     # Need to create a calculation name in the db for the calculation and set values
+    # Checks if the calculation name is already taken
     # Need to also set the current rate for the target rate 
-    CalculationName.create!(
+    @stored_calculation_name = CalculationName.new(
       calculation_name: @calculation_name,
       user_id: current_user.id
     )
-    @calculation_name_id = CalculationName
-                           .where(calculation_name: @calculation_name).first.id
-    @current_target_rate = CurrentWeeklyRate
-                           .where(base: @base_currency).first[@target_currency.to_sym]
+    respond_to do |format|
+      format.html
+      if @stored_calculation_name.save
+        render plain: { error: 'none' }.to_json, content_type: 'application/json'
+      else
+        render plain: {
+          error: @stored_calculation_name.errors,
+          name: @stored_calculation_name.calculation_name
+        }.to_json, content_type: 'application/json'
+      end
+    end
+    @current_target_rate = CurrentWeeklyRate.where(base: @base_currency)
+                                            .first[@target_currency.to_sym]
 
     # For each week the user wants a calculation
     # get the first and second year historical rates,
@@ -180,7 +190,7 @@ class DashboardController < ApplicationController
         predicted_rate: predicted_rate,
         sum: sum,
         profit_loss: profit_loss,
-        calculation_name_id: @calculation_name_id,
+        calculation_name_id: @stored_calculation_name.id,
         user_id: current_user.id
       }
       @saved_weekly_calculations_array << saved_weekly_calculation_hash
@@ -206,7 +216,7 @@ class DashboardController < ApplicationController
         sum: hsh[:sum],
         profit_loss: hsh[:profit_loss],
         rank: hsh[:rank],
-        calculation_name_id: @calculation_name_id,
+        calculation_name_id: @stored_calculation_name.id,
         user_id: current_user.id
       )
     end

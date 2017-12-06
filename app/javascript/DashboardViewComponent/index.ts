@@ -1,5 +1,6 @@
 import { Component         } from "@angular/core";
 import { HttpClient        } from '@angular/common/http';
+import { Ng4LoadingSpinnerService } from 'ng4-loading-spinner';
 import template              from "./template.html";
 import * as d3 from "d3";
 import * as $ from "jquery";
@@ -10,12 +11,32 @@ var DashboardViewComponent = Component({
 }).Class({
     constructor: [
         HttpClient,
-        function(http) {
+        Ng4LoadingSpinnerService,
+        function(http, spinnerService) {
             this.http = http;
+            this.spinnerService = spinnerService;
         }
     ],
     // Gets all the calculations for the user when dashboard is visited
     ngOnInit() {
+        var selects = $('.currency-drop-down');
+        selects.change(function() {
+            // build array of selected option indexes
+            var indexes = [];
+            $.each(selects, function() {
+                indexes.push($(this).children('option:selected').index());
+            });
+            $.each(selects, function() {
+                var selected = $(this).children('option:selected').index();
+                $.each($(this).children('option'), function(index, item) {
+                    if ($(this).val() && indexes.indexOf(index) > -1 && index != selected) {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            });
+        });
         var self = this;
         self.http.get(
             "/dashboard.json"
@@ -26,10 +47,17 @@ var DashboardViewComponent = Component({
     // Submits the form to make a calculation
     onSubmit(form: any) {
         var self = this;
+        self.spinnerService.show();
         self.http.post(
             "/dashboard", form
         ).subscribe(
-            data => { self.ngOnInit() }
+            data => {
+                if (data.error.calculation_name !== undefined) {
+                    alert(`The calculation name ${data.name} has already been taken.`);
+                }
+                self.spinnerService.hide();
+                self.ngOnInit()
+            }
         );
     },
     // Renders the table and graph for a the selected calculation

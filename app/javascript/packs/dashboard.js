@@ -4,6 +4,8 @@ import { BrowserModule                    } from "@angular/platform-browser";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { platformBrowserDynamic           } from "@angular/platform-browser-dynamic";
 import { HttpClientModule                 } from '@angular/common/http';
+import { Ng4LoadingSpinnerModule } from 'ng4-loading-spinner';
+
 
 import { DashboardViewComponent           } from "DashboardViewComponent";
 
@@ -12,7 +14,8 @@ var DashboardAppModule = NgModule({
         BrowserModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientModule
+        HttpClientModule,
+        Ng4LoadingSpinnerModule.forRoot()
     ],
     declarations:   [
         DashboardViewComponent
