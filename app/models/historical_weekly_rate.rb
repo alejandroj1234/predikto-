@@ -2,10 +2,11 @@ class HistoricalWeeklyRate < ApplicationRecord
 end
 
 private
-def insert_historical_weekly_rates(base_currency, date, weekly_rates)
+def insert_historical_weekly_rates(base_currency, date, week_number, weekly_rates)
   HistoricalWeeklyRate.create(
     base: base_currency,
     week: date,
+    week_number: week_number,
     AUD: weekly_rates['rates']['AUD'],
     BGN: weekly_rates['rates']['BGN'],
     BRL: weekly_rates['rates']['BRL'],

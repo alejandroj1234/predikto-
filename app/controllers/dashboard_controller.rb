@@ -49,7 +49,6 @@ class DashboardController < ApplicationController
 
   def create
     @today_date = Date.today
-    @one_week_ago_from_today = @today_date - 7
     @base_currency = params[:"base-currency"].upcase
     @target_currency = params[:"target-currency"].upcase
     @calculation_name = params[:"calculation-name"]
@@ -59,52 +58,65 @@ class DashboardController < ApplicationController
 
     # check if the base currency passed in from the form has a historical rate created within the past week
     # if it isn't then check if the base currency even has a historical rate,
-    # if it does then figure out how many weeks it has been since it was created
+    # if it does then figure out how many weeks it has been since the most recent rate has been created
+    # Get a count for the weeks between the most recently created and today's date
+    # Then Delete the earlier historical rates
     # Then enter in the db for each one year ago and two years ago, the rates for the respective date 
+
     if HistoricalWeeklyRate.where(base: @base_currency)
-                           .where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
+                           .where(created_at: @today_date.weeks_ago(1).end_of_day..@today_date.end_of_day).blank?
 
       if HistoricalWeeklyRate.where(base: @base_currency).present?
         most_recent_created_at_date = HistoricalWeeklyRate.where(base: @base_currency)
                                                           .order(:created_at)
                                                           .reverse.first
                                                           .created_at.to_date
-        @week_count = (most_recent_created_at_date - @today_date).to_i / 7
+        @week_count = most_recent_created_at_date.step(@today_date, 7).count - 1
+        @week_count.each do |count|
+          HistoricalWeeklyRate.where(base: @base_currency)
+                              .order(:week)[count].destroy
+          HistoricalWeeklyRate.where(base: @base_currency)
+                              .order(:week)[count + 25].destroy
+        end
       end
 
       total_number_of_weeks = @week_count.present? ? @week_count.floor : 25
       1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
-          weekly_date = @today_date - 365 + (weekly_index * 7)
+          date_of_week = (@today_date.years_ago(1) + (weekly_index * 7))
+          week_number = (@today_date.years_ago(1) + (weekly_index * 7)).cweek + 100
           attempt_count = 0
           max_attempts = 10
           begin
             attempt_count += 1
-            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{date_of_week}?base=#{@base_currency}").parse
           rescue
             sleep 3
             retry if attempt_count < max_attempts
           end
           insert_historical_weekly_rates(
             @base_currency,
-            weekly_date,
+            date_of_week,
+            week_number,
             weekly_returned_rates
           )
         end
         second_thread = Thread.new do
-          weekly_date = @today_date - 731 + (weekly_index * 7)
+          date_of_week = (@today_date.years_ago(2) + (weekly_index * 7))
+          week_number = (@today_date.years_ago(2) + (weekly_index * 7)).cweek + 200
           attempt_count = 0
           max_attempts = 10
           begin
             attempt_count += 1
-            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{weekly_date}?base=#{@base_currency}").parse
+            weekly_returned_rates = HTTP.get("https://api.fixer.io/#{date_of_week}?base=#{@base_currency}").parse
           rescue
             sleep 3
             retry if attempt_count < max_attempts
           end
           insert_historical_weekly_rates(
             @base_currency,
-            weekly_date,
+            date_of_week,
+            week_number,
             weekly_returned_rates
           )
         end
@@ -115,12 +127,20 @@ class DashboardController < ApplicationController
 
     # The same logic as for historical values but for the current rate
     if CurrentWeeklyRate.where(base: @base_currency)
-                        .where(created_at: @one_week_ago_from_today.end_of_day..@today_date.end_of_day).blank?
+                        .where(created_at: @today_date.weeks_ago(1).end_of_day..@today_date.end_of_day).blank?
       CurrentWeeklyRate.where(base: @base_currency).destroy_all
-      current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{@base_currency}").parse
+      attempt_count = 0
+      max_attempts = 10
+      begin
+        attempt_count += 1
+        current_base_rate = HTTP.get("https://api.fixer.io/#{@today_date}?base=#{@base_currency}").parse
+      rescue
+        sleep 3
+        retry if attempt_count < max_attempts
+      end
       insert_current_weekly_rate(
         @base_currency,
-        @today_date,
+        @today_date.beginning_of_week,
         current_base_rate
       )
     end
@@ -142,18 +162,19 @@ class DashboardController < ApplicationController
     # This value is the predicated rate.
     # using the predicated rate calculate sum and profit/loss and push into array
     1.upto(@max_waiting_time) do |index|
-      first_week = @today_date - 365 + (index * 7)
-      second_week = @today_date - 731 + (index * 7)
+      first_week_number = (@today_date.years_ago(1) + (index * 7)).cweek + 100
+      second_week_number = (@today_date.years_ago(2) + (index * 7)).cweek + 200
+
       first_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
-                                            .where(week: first_week)
+                                            .where(week_number: first_week_number)
                                             .first[@target_currency.to_sym]
       second_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
-                                             .where(week: second_week)
+                                             .where(week_number: second_week_number)
                                              .first[@target_currency.to_sym]
       predicted_rate = (first_year_rate + second_year_rate) / 2
       sum = (@amount * predicted_rate)
       profit_loss = ((@amount * predicted_rate) - (@amount * @current_target_rate))
-      year_and_week = @today_date + (index * 7)
+      year_and_week = (@today_date + (index * 7))
       saved_weekly_calculation_hash = {
         year_and_week: year_and_week,
         predicted_rate: predicted_rate,

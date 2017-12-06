@@ -4,6 +4,7 @@ class CreateHistoricalWeeklyRates < ActiveRecord::Migration[5.1]
 
       t.string  :base, null: false
       t.date    :week, null: false
+      t.integer :week_number, null: false
       t.decimal :AUD, precision: 8, scale: 3
       t.decimal :BGN, precision: 8, scale: 3
       t.decimal :BRL, precision: 8, scale: 3

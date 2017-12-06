@@ -66,6 +66,7 @@ ActiveRecord::Schema.define(version: 20171202050721) do
   create_table "historical_weekly_rates", force: :cascade do |t|
     t.string "base", null: false
     t.date "week", null: false
+    t.integer "week_number", null: false
     t.decimal "AUD", precision: 8, scale: 3
     t.decimal "BGN", precision: 8, scale: 3
     t.decimal "BRL", precision: 8, scale: 3
