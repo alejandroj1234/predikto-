@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
-  subject { described_class.new(encrypted_password: "test_password", email: "tester@acme.com") }
+  subject { described_class.new(password: "test_password", email: "tester@acme.com") }
 
   describe "Validations" do
     it "is valid with valid attributes" do
@@ -9,7 +9,7 @@ RSpec.describe User, type: :model do
     end
 
     it "is not valid without a password" do
-      subject.encrypted_password = nil
+      subject.password = nil
       expect(subject).to_not be_valid
     end
 

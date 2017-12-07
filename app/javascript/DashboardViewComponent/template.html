@@ -1,4 +1,5 @@
 <section id="main-section">
+    <ng4-loading-spinner> </ng4-loading-spinner>
     <header >
         <h1 >
             Currency Predictor
@@ -11,7 +12,7 @@
                 <form #makePrediction="ngForm" (ngSubmit)="onSubmit(makePrediction.value); makePrediction.reset()" ngNativeValidate>
                     <div class="form-group float-label-control">
                         <label for="BaseCurrency">Base Currency</label>
-                        <select name="base-currency" class="form-control"  id="BaseCurrency" ngModel required>
+                        <select name="base-currency" class="currency-drop-down form-control"  id="BaseCurrency" ngModel required>
                             <option value="aud">AUD</option>
                             <option value="bgn">BGN</option>
                             <option value="brl">BRL</option>
@@ -48,7 +49,7 @@
                     </div>
                     <div class="form-group float-label-control">
                         <label for="TargetCurrency">Target Currency</label>
-                        <select name="target-currency" class="form-control"  id="TargetCurrency" ngModel required>
+                        <select name="target-currency" class="currency-drop-down form-control"  id="TargetCurrency" ngModel required>
                             <option value="aud">AUD</option>
                             <option value="bgn">BGN</option>
                             <option value="brl">BRL</option>

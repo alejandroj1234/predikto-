@@ -3,7 +3,7 @@ end
 
 private
 def insert_current_weekly_rate(base_currency, date, weekly_rates)
-  CurrentWeeklyRate.create(
+  CurrentWeeklyRate.create!(
     base: base_currency,
     week: date,
     AUD: weekly_rates['rates']['AUD'],
