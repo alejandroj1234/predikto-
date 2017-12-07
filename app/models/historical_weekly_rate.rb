@@ -3,7 +3,7 @@ end
 
 private
 def insert_historical_weekly_rates(base_currency, date, week_number, weekly_rates)
-  HistoricalWeeklyRate.create(
+  HistoricalWeeklyRate.create!(
     base: base_currency,
     week: date,
     week_number: week_number,

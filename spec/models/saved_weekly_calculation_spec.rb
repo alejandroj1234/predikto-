@@ -40,14 +40,9 @@ RSpec.describe SavedWeeklyCalculation, type: :model do
       expect(subject).to_not be_valid
     end
 
-    it "is not valid without a rank" do
+    it "is valid without a rank" do
       subject.rank = nil
-      expect(subject).to_not be_valid
-    end
-
-    it "is not valid without a user id" do
-      subject.user_id = nil
-      expect(subject).to_not be_valid
+      expect(subject).to be_valid
     end
 
     it "is not valid without a calculation name id" do

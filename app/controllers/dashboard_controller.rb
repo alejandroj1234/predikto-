@@ -53,7 +53,7 @@ class DashboardController < ApplicationController
     @target_currency = params[:"target-currency"].upcase
     @calculation_name = params[:"calculation-name"]
     @max_waiting_time = params[:"max-waiting-time"].to_i
-    @amount = params[:amount]
+    @amount = params[:amount].to_i
     @saved_weekly_calculations_array = []
 
     # check if the base currency passed in from the form has a historical rate created within the past week
@@ -83,8 +83,8 @@ class DashboardController < ApplicationController
       total_number_of_weeks = @week_count.present? ? @week_count : 25
       1.upto(total_number_of_weeks) do |weekly_index|
         first_thread = Thread.new do
-          date_of_week = (@today_date.years_ago(1) + (weekly_index * 7))
-          week_number = (@today_date.years_ago(1) + (weekly_index * 7)).cweek + 100
+          date_of_week = (@today_date.years_ago(1) + weekly_index.week)
+          week_number = (@today_date.years_ago(1) + weekly_index.week).cweek + 100
           attempt_count = 0
           max_attempts = 10
           begin
@@ -102,8 +102,8 @@ class DashboardController < ApplicationController
           )
         end
         second_thread = Thread.new do
-          date_of_week = (@today_date.years_ago(2) + (weekly_index * 7))
-          week_number = (@today_date.years_ago(2) + (weekly_index * 7)).cweek + 200
+          date_of_week = (@today_date.years_ago(2) + weekly_index.week)
+          week_number = (@today_date.years_ago(2) + weekly_index.week).cweek + 200
           attempt_count = 0
           max_attempts = 10
           begin
@@ -140,7 +140,7 @@ class DashboardController < ApplicationController
       end
       insert_current_weekly_rate(
         @base_currency,
-        @today_date.beginning_of_week,
+        @today_date,
         current_base_rate
       )
     end
@@ -172,8 +172,8 @@ class DashboardController < ApplicationController
     # This value is the predicated rate.
     # using the predicated rate calculate sum and profit/loss and push into array
     1.upto(@max_waiting_time) do |index|
-      first_week_number = (@today_date.years_ago(1) + (index * 7)).cweek + 100
-      second_week_number = (@today_date.years_ago(2) + (index * 7)).cweek + 200
+      first_week_number = (@today_date.years_ago(1) + index.week).cweek + 100
+      second_week_number = (@today_date.years_ago(2) + index.week).cweek + 200
 
       first_year_rate = HistoricalWeeklyRate.where(base: @base_currency)
                                             .where(week_number: first_week_number)
@@ -184,7 +184,7 @@ class DashboardController < ApplicationController
       predicted_rate = (first_year_rate + second_year_rate) / 2
       sum = (@amount * predicted_rate)
       profit_loss = ((@amount * predicted_rate) - (@amount * @current_target_rate))
-      year_and_week = (@today_date + (index * 7))
+      year_and_week = (@today_date + index.week)
       saved_weekly_calculation_hash = {
         year_and_week: year_and_week,
         predicted_rate: predicted_rate,
@@ -210,7 +210,7 @@ class DashboardController < ApplicationController
 
     # save each weekly calculation in the DB
     @saved_weekly_calculations_array.each do |hsh|
-      SavedWeeklyCalculation.create(
+      SavedWeeklyCalculation.create!(
         year_and_week: hsh[:year_and_week],
         predicted_rate: hsh[:predicted_rate],
         sum: hsh[:sum],
