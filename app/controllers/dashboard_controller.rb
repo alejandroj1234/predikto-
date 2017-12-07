@@ -210,7 +210,7 @@ class DashboardController < ApplicationController
 
     # save each weekly calculation in the DB
     @saved_weekly_calculations_array.each do |hsh|
-      SavedWeeklyCalculation.create!(
+      SavedWeeklyCalculation.create(
         year_and_week: hsh[:year_and_week],
         predicted_rate: hsh[:predicted_rate],
         sum: hsh[:sum],

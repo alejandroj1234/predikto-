@@ -122,46 +122,6 @@ RSpec.describe DashboardController, type: :controller do
                                  :"calculation-name" => 'calc name 2'}
         end.to raise_error(NoMethodError)
       end
-
-      it 'prevents creating a calculation name with an already existing name' do
-        expect do
-          post :create, params: {:"base-currency" => 'EUR',
-                                 :"target-currency" => 'USD',
-                                 :amount => 1000,
-                                 :"max-waiting-time" => 20,
-                                 :"calculation-name" => 'test_calculation'}
-        end.to raise_exception(ActiveRecord::RecordInvalid)
-      end
-
-      it 'prevents creating a calculation name without a name' do
-        expect do
-          post :create, params: {:"base-currency" => 'EUR',
-                                 :"target-currency" => 'USD',
-                                 :amount => 1000,
-                                 :"max-waiting-time" => 20,
-                                 :"calculation-name" => ''}
-        end.to raise_exception(ActiveRecord::RecordInvalid)
-      end
-
-      it 'prevents creating saved weekly rates without a max waiting time' do
-        expect do
-          post :create, params: {:"base-currency" => 'EUR',
-                                 :"target-currency" => 'USD',
-                                 :amount => 1000,
-                                 :"max-waiting-time" => '',
-                                 :"calculation-name" => 'calc name 2'}
-        end.to raise_exception(NoMethodError)
-      end
-
-      it 'prevents creating saved weekly rates without an amount' do
-        expect do
-          post :create, params: {:"base-currency" => 'EUR',
-                                 :"target-currency" => 'USD',
-                                 :amount => '',
-                                 :"max-waiting-time" => 20,
-                                 :"calculation-name" => 'calc name 2'}
-        end.to raise_exception(NoMethodError)
-      end
     end
   end
 end

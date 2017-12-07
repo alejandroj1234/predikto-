@@ -4,5 +4,4 @@ class SavedWeeklyCalculation < ApplicationRecord
   validates_presence_of :predicted_rate
   validates_presence_of :sum
   validates_presence_of :profit_loss
-  validates_presence_of :profit_loss
 end
